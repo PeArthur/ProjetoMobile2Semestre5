@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_URL from './api';
+import { useAuth } from './AuthContext';
 
 import {
     Appbar,
@@ -13,7 +13,7 @@ import {
 import { styles } from './css/Styles';
 
 const Login = ({ navigation }) => {
-
+    const { login } = useAuth();
     const [email, setEmail] = React.useState('');
     const [senha, setSenha] = React.useState('');
     const [mostrarSenha, setMostrarSenha] = React.useState(false);
@@ -38,11 +38,9 @@ const Login = ({ navigation }) => {
             const dados = await resposta.json();
 
             if (resposta.ok) {
-                await AsyncStorage.setItem('userToken', dados.token);
-                await AsyncStorage.setItem('userName', dados.usuario?.nome || 'Usuário');
-                await AsyncStorage.setItem('userEmail', dados.usuario?.email || '');
+                // Atualiza o AuthContext global (e salva no AsyncStorage)
+                await login(dados.token, dados.usuario);
                 alert('Login realizado com sucesso!');
-
                 navigation.navigate('Home');
             } else {
                 alert(dados.mensagem || 'Erro ao fazer login.');

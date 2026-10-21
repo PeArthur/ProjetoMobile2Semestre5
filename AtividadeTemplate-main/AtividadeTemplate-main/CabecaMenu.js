@@ -1,43 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Avatar, Text, IconButton, Portal, Dialog, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 
 const CabecalhoMenu = () => {
-  const [nome, setNome] = useState('Visitante');
-  const [email, setEmail] = useState('Toque para entrar');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const { user, isLoggedIn, logout } = useAuth();
   const navigation = useNavigation();
   const [dialogSair, setDialogSair] = useState(false);
 
-  // Buscar dados do usuário logado no AsyncStorage
-  const carregarUsuarioLogado = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      const nomeSalvo = await AsyncStorage.getItem('userName');
-      const emailSalvo = await AsyncStorage.getItem('userEmail');
-
-      if (token && nomeSalvo) {
-        setNome(nomeSalvo);
-        setEmail(emailSalvo || '');
-        setIsLoggedIn(true);
-      } else {
-        setNome('Visitante');
-        setEmail('Toque para entrar');
-        setIsLoggedIn(false);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar dados do usuário no menu:', error);
-    }
-  };
-
-  useEffect(() => {
-    carregarUsuarioLogado();
-    const unsubscribe = navigation.addListener('focus', carregarUsuarioLogado);
-    return unsubscribe;
-  }, [navigation]);
+  // Nome e e-mail reativos a partir do AuthContext
+  const nome = isLoggedIn && user?.nome ? user.nome : 'Visitante';
+  const email = isLoggedIn && user?.email ? user.email : 'Toque para entrar';
 
   const irParaAreaAdministrativa = () => {
     if (isLoggedIn) {
@@ -50,17 +24,7 @@ const CabecalhoMenu = () => {
 
   const confirmarSaida = async () => {
     setDialogSair(false);
-    try {
-      // Limpa os dados de sessão ao sair
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userName');
-      await AsyncStorage.removeItem('userEmail');
-      setNome('Visitante');
-      setEmail('Toque para entrar');
-      setIsLoggedIn(false);
-    } catch (error) {
-      console.error('Erro ao limpar sessão:', error);
-    }
+    await logout();
     navigation.navigate("Home");
   };
 

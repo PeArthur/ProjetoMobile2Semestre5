@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import {
     Appbar,
@@ -9,15 +9,12 @@ import {
     Portal,
     Dialog,
     ActivityIndicator,
-    IconButton,
 } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 import API_URL from './api';
 
 const AreaAdministrativa = ({ navigation }) => {
-    const [token, setToken] = useState(null);
-    const [verificandoAuth, setVerificandoAuth] = useState(true);
+    const { token, isLoggedIn, loadingAuth } = useAuth();
     const [conteudos, setConteudos] = useState([]);
     const [carregando, setCarregando] = useState(false);
 
@@ -35,31 +32,15 @@ const AreaAdministrativa = ({ navigation }) => {
     const [itemExcluir, setItemExcluir] = useState(null);
     const [excluindo, setExcluindo] = useState(false);
 
-    // Verifica autenticação sempre que a tela ganha foco
-    useFocusEffect(
-        useCallback(() => {
-            const verificarAcesso = async () => {
-                setVerificandoAuth(true);
-                try {
-                    const userToken = await AsyncStorage.getItem('userToken');
-                    if (!userToken) {
-                        alert('Acesso negado: Somente usuários autenticados podem acessar a área administrativa.');
-                        navigation.replace('Login');
-                        return;
-                    }
-                    setToken(userToken);
-                    carregarConteudos();
-                } catch (error) {
-                    console.error('Erro ao verificar autenticação:', error);
-                    navigation.replace('Login');
-                } finally {
-                    setVerificandoAuth(false);
-                }
-            };
-
-            verificarAcesso();
-        }, [navigation])
-    );
+    // Proteção de rota via AuthContext
+    useEffect(() => {
+        if (!loadingAuth && !isLoggedIn) {
+            alert('Acesso negado: Somente usuários autenticados podem acessar a área administrativa.');
+            navigation.replace('Login');
+        } else if (isLoggedIn) {
+            carregarConteudos();
+        }
+    }, [isLoggedIn, loadingAuth, navigation]);
 
     // Carregar conteúdos do backend
     const carregarConteudos = async () => {
@@ -182,7 +163,7 @@ const AreaAdministrativa = ({ navigation }) => {
         }
     };
 
-    if (verificandoAuth) {
+    if (loadingAuth || !isLoggedIn) {
         return (
             <View style={estilos.carregandoContainer}>
                 <ActivityIndicator size="large" color="#F2A900" />

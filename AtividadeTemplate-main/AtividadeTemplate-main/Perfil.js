@@ -3,12 +3,15 @@ import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { Avatar, Text, TextInput, Button, Divider, IconButton } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { useAuth } from './AuthContext';
+
 //campo  de imagem
 import * as ImagePicker from 'expo-image-picker';
 
 const Perfil = ({ navigation }) => {
+    const { user, atualizarUsuario } = useAuth();
 
-    // Dados do usuário -> receber os dados  via banco de dados
+    // Dados do usuário
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [telefone, setTelefone] = useState('');
@@ -19,22 +22,11 @@ const Perfil = ({ navigation }) => {
     const [imagem, setImagem] = useState(null);
 
     useEffect(() => {
-        const carregarDadosPerfil = async () => {
-            try {
-                const nomeSalvo = await AsyncStorage.getItem('userName');
-                const emailSalvo = await AsyncStorage.getItem('userEmail'); 
-
-                if (nomeSalvo) setNome(nomeSalvo);
-                if (emailSalvo) setEmail(emailSalvo);
-                
-
-            } catch (error) {
-                console.error('Erro ao carregar dados do perfil:', error);
-            }
-        };
-
-        carregarDadosPerfil();
-    }, []);
+        if (user) {
+            if (user.nome) setNome(user.nome);
+            if (user.email) setEmail(user.email);
+        }
+    }, [user]);
 
     // ==============================
     // ESCOLHER IMAGEM
@@ -67,7 +59,7 @@ const Perfil = ({ navigation }) => {
     // SALVAR PERFIL
     // ==============================
 
-    const salvarPerfil = () => {
+    const salvarPerfil = async () => {
         console.log('Dados do perfil:', {
             nome,
             email,
@@ -75,11 +67,10 @@ const Perfil = ({ navigation }) => {
             cpf,
             senha,
             imagem,
-
         });
 
-         alert('Perfil atualizado com sucesso!');
-
+        await atualizarUsuario({ nome, email });
+        alert('Perfil atualizado com sucesso!');
     };
 
 

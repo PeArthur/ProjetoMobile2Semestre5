@@ -11,6 +11,9 @@ import { styles } from './css/Styles';
 import { PaperProvider } from 'react-native-paper';
 import { theme } from './theme/theme';
 
+// AuthContext
+import { AuthProvider } from './AuthContext';
+
 // AppBar / Home
 import AppBar from './AppBar';
 // Rotas
@@ -89,10 +92,12 @@ export default function App() {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <NavigationContainer>
-        <DrawerNavigation />
-      </NavigationContainer>
-    </PaperProvider>
+    <AuthProvider>
+      <PaperProvider theme={theme}>
+        <NavigationContainer>
+          <DrawerNavigation />
+        </NavigationContainer>
+      </PaperProvider>
+    </AuthProvider>
   );
 }

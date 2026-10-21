@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import {
     Appbar,
@@ -9,18 +9,16 @@ import {
     Dialog,
     Button,
 } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 import API_URL from './api';
 import ModCard from './Cards';
 
 const Pesquisa = ({ navigation }) => {
+    const { isLoggedIn, token } = useAuth();
     const [termo, setTermo] = useState('');
     const [resultados, setResultados] = useState([]);
     const [carregando, setCarregando] = useState(false);
     const [jaPesquisou, setJaPesquisou] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [token, setToken] = useState(null);
 
     // Modal de Edição
     const [modalEditVisivel, setModalEditVisivel] = useState(false);
@@ -35,18 +33,6 @@ const Pesquisa = ({ navigation }) => {
     const [dialogExcluirVisivel, setDialogExcluirVisivel] = useState(false);
     const [itemExcluir, setItemExcluir] = useState(null);
     const [excluindo, setExcluindo] = useState(false);
-
-    // Verifica login ao focar
-    useFocusEffect(
-        useCallback(() => {
-            const verificarLogin = async () => {
-                const userToken = await AsyncStorage.getItem('userToken');
-                setToken(userToken);
-                setIsLoggedIn(!!userToken);
-            };
-            verificarLogin();
-        }, [])
-    );
 
     // Executa a busca no backend
     const executarPesquisa = async (termoBusca) => {

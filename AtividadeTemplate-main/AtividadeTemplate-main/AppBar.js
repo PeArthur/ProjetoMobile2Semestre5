@@ -3,15 +3,13 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } 
 import { Appbar, ActivityIndicator, Portal, Dialog, Button, TextInput } from 'react-native-paper';
 import { styles } from './css/Styles';
 import ModCard from './Cards';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 import API_URL from './api';
 
 const AppBar = ({ navigation }) => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userName, setUserName] = useState('');
-    const [token, setToken] = useState(null);
+    const { user, isLoggedIn, token } = useAuth();
     const [conteudos, setConteudos] = useState([]);
     const [carregando, setCarregando] = useState(false);
     const [categoriaAtiva, setCategoriaAtiva] = useState('TODAS');
@@ -30,28 +28,9 @@ const AppBar = ({ navigation }) => {
     const [itemExcluir, setItemExcluir] = useState(null);
     const [excluindo, setExcluindo] = useState(false);
 
-    // Atualiza estado de login e carrega conteúdos sempre que a tela ganha foco
+    // Recarrega conteúdos sempre que a tela ganha foco
     useFocusEffect(
         useCallback(() => {
-            const verificarLogin = async () => {
-                try {
-                    const userToken = await AsyncStorage.getItem('userToken');
-                    const nomeSalvo = await AsyncStorage.getItem('userName');
-                    if (userToken) {
-                        setIsLoggedIn(true);
-                        setToken(userToken);
-                        setUserName(nomeSalvo || '');
-                    } else {
-                        setIsLoggedIn(false);
-                        setToken(null);
-                        setUserName('');
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar login no AppBar:', error);
-                }
-            };
-
-            verificarLogin();
             carregarConteudos();
         }, [])
     );
@@ -275,7 +254,7 @@ const AppBar = ({ navigation }) => {
                 )}
             </ScrollView>
 
-            {/* DIALOG DE EDIÇÃO (Visível apenas quando autenticado clica em Editar) */}
+            {/* DIALOG DE EDIÇÃO */}
             <Portal>
                 <Dialog
                     visible={modalEditVisivel}
