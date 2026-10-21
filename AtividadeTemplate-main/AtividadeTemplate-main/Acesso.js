@@ -1,22 +1,23 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Appbar, Button, Text, } from 'react-native-paper';
+import { Appbar, Button, Text } from 'react-native-paper';
 import { styles } from './css/Styles';
 
 const Acesso = ({ navigation }) => {
-
     return (
-        <View>
+        <View style={{ flex: 1, backgroundColor: '#EEEEEE' }}>
             {/* APPBAR */}
-            <Appbar.Header>
+            <Appbar.Header style={styles.header}>
                 <Appbar.BackAction
-                    iconColor="black"
+                    iconColor="white"
                     onPress={() => navigation.goBack()}
                 />
                 <Appbar.Content
                     title="Acesso"
-                 />
+                    titleStyle={styles.title}
+                />
             </Appbar.Header>
+
             {/* CONTEÚDO */}
             <View style={styles.acesso}>
                 <Text
@@ -27,12 +28,13 @@ const Acesso = ({ navigation }) => {
                 </Text>
                 <Text
                     variant="bodyLarge"
-                    style={styles.acessoTexto}>
+                    style={styles.acessoTexto}
+                >
                     Você já possui uma conta?
                 </Text>
                 
                 {/* JÁ TENHO CADASTRO */}
-                 <Button
+                <Button
                     mode="contained"
                     icon="login"
                     style={styles.acessoButton}
@@ -41,9 +43,7 @@ const Acesso = ({ navigation }) => {
                     JÁ TENHO CADASTRO
                 </Button>
 
-
                 {/* NÃO TENHO CADASTRO */}
-
                 <Button
                     mode="outlined"
                     icon="account-plus"
@@ -52,9 +52,7 @@ const Acesso = ({ navigation }) => {
                 >
                     NÃO TENHO CADASTRO
                 </Button>
-
             </View>
-
         </View>
     );
 };

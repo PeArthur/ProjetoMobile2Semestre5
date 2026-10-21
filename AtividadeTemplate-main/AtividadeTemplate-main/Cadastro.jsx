@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import API_URL from './api';
 
 import {
     Appbar,
@@ -19,21 +20,27 @@ const Cadastro = ({ navigation }) => {
 
     const [mostrarSenha, setMostrarSenha] = React.useState(false);
     const [mostrarConfirmacao, setMostrarConfirmacao] = React.useState(false);
+    const [carregando, setCarregando] = React.useState(false);
 
     const cadastrar = async () => {
+        if (!nome.trim() || !email.trim() || !senha.trim()) {
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
 
         if (senha !== confirmarSenha) {
             alert('As senhas não coincidem!');
             return;
         }
 
+        setCarregando(true);
         try {
-            const resposta = await fetch('http://localhost:3000/api/auth/register', {
+            const resposta = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ nome, email, senha }),
+                body: JSON.stringify({ nome: nome.trim(), email: email.trim(), senha }),
             });
 
             const dados = await resposta.json();
@@ -47,6 +54,8 @@ const Cadastro = ({ navigation }) => {
         } catch (error) {
             console.error('Erro de conexão:', error);
             alert('Não foi possível conectar ao servidor.');
+        } finally {
+            setCarregando(false);
         }
     };
 
@@ -184,6 +193,8 @@ const Cadastro = ({ navigation }) => {
                     icon="account-plus"
                     style={styles.cadastroButton}
                     onPress={cadastrar}
+                    loading={carregando}
+                    disabled={carregando}
                 >
                     CADASTRAR
                 </Button>
