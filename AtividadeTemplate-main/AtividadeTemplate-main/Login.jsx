@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_URL from './api';
+import { useAuth } from './AuthContext';
 
 import {
     Appbar,
@@ -12,36 +13,43 @@ import {
 import { styles } from './css/Styles';
 
 const Login = ({ navigation }) => {
-
+    const { login } = useAuth();
     const [email, setEmail] = React.useState('');
     const [senha, setSenha] = React.useState('');
     const [mostrarSenha, setMostrarSenha] = React.useState(false);
+    const [carregando, setCarregando] = React.useState(false);
 
     const entrar = async () => {
+        if (!email.trim() || !senha.trim()) {
+            alert('Por favor, preencha o e-mail e a senha.');
+            return;
+        }
+
+        setCarregando(true);
         try {
-            const resposta = await fetch('http://127.0.0.1:3000/api/auth/login', {
+            const resposta = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, senha }),
+                body: JSON.stringify({ email: email.trim(), senha }),
             });
 
             const dados = await resposta.json();
 
             if (resposta.ok) {
-                await AsyncStorage.setItem('userToken', dados.token);
-                await AsyncStorage.setItem('userName', dados.usuario?.nome || 'Usuário');
-                await AsyncStorage.setItem('userEmail', dados.usuario?.email || '');
+                // Atualiza o AuthContext global (e salva no AsyncStorage)
+                await login(dados.token, dados.usuario);
                 alert('Login realizado com sucesso!');
-
-                navigation.navigate('home');
+                navigation.navigate('Home');
             } else {
                 alert(dados.mensagem || 'Erro ao fazer login.');
             }
         } catch (error) {
             console.error('Erro de conexão:', error);
             alert('Não foi possível conectar ao servidor.');
+        } finally {
+            setCarregando(false);
         }
     };
 
@@ -51,7 +59,7 @@ const Login = ({ navigation }) => {
 
             {/* APPBAR */}
 
-            <Appbar.Header >
+            <Appbar.Header style={styles.header}>
 
                 <Appbar.BackAction
                     iconColor="black"
@@ -134,6 +142,8 @@ const Login = ({ navigation }) => {
                     icon="login"
                     style={styles.loginButton}
                     onPress={entrar}
+                    loading={carregando}
+                    disabled={carregando}
                 >
                     ENTRAR
                 </Button>

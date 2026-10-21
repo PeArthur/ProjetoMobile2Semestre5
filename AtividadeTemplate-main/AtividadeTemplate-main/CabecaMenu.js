@@ -1,63 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Avatar, Text, IconButton, Portal, Dialog, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 
 const CabecalhoMenu = () => {
-  const [nome, setNome] = useState('Carregando...');
-  const [email, setEmail] = useState('');
-
+  const { user, isLoggedIn, logout } = useAuth();
   const navigation = useNavigation();
   const [dialogSair, setDialogSair] = useState(false);
 
-  // Buscar dados do usuário logado no AsyncStorage
-  useEffect(() => {
-    const carregarUsuarioLogado = async () => {
-      try {
-        const nomeSalvo = await AsyncStorage.getItem('userName');
-        const emailSalvo = await AsyncStorage.getItem('userEmail');
+  // Nome e e-mail reativos a partir do AuthContext
+  const nome = isLoggedIn && user?.nome ? user.nome : 'Visitante';
+  const email = isLoggedIn && user?.email ? user.email : 'Toque para entrar';
 
-        if (nomeSalvo) setNome(nomeSalvo);
-        if (emailSalvo) setEmail(emailSalvo);
-      } catch (error) {
-        console.error('Erro ao carregar dados do usuário no menu:', error);
-      }
-    };
-
-    carregarUsuarioLogado();
-  }, []);
+  const irParaAreaAdministrativa = () => {
+    if (isLoggedIn) {
+      navigation.navigate('AreaAdministrativa');
+    } else {
+      alert('Acesso restrito: Somente usuários autenticados podem acessar a área administrativa.');
+      navigation.navigate('Login');
+    }
+  };
 
   const confirmarSaida = async () => {
     setDialogSair(false);
-    try {
-      // Limpa os dados de sessão ao sair
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userName');
-      await AsyncStorage.removeItem('userEmail');
-    } catch (error) {
-      console.error('Erro ao limpar sessão:', error);
-    }
-    navigation.navigate("Login");
+    await logout();
+    navigation.navigate("Home");
   };
 
   return (
     <View style={styles.container}>
 
-      {/* Área do usuário */}
-      <View style={styles.usuario}>
+      {/* Área do usuário (Identificação do Usuário) */}
+      <Pressable
+        style={styles.usuario}
+        onPress={() => {
+          if (isLoggedIn) {
+            navigation.navigate('Perfil');
+          } else {
+            navigation.navigate('Acesso');
+          }
+        }}
+      >
         {/* Avatar */}
-        <Avatar.Icon
-          size={65}
-          icon="account"
-          style={styles.avatar}
-        />
+        {isLoggedIn && user?.foto ? (
+          <Avatar.Image
+            size={65}
+            source={{ uri: user.foto }}
+            style={styles.avatar}
+          />
+        ) : (
+          <Avatar.Icon
+            size={65}
+            icon="account"
+            style={styles.avatar}
+          />
+        )}
 
         {/* Nome e e-mail */}
         <View style={styles.informacoes}>
           <Text
             variant="titleMedium"
             style={styles.nome}
+            numberOfLines={1}
           >
             {nome}
           </Text>
@@ -70,31 +75,31 @@ const CabecalhoMenu = () => {
             {email}
           </Text>
         </View>
-      </View>
+      </Pressable>
 
-      {/* Área do perfil */}
+      {/* Opção Início */}
       <View style={styles.perfil}>
         <Text variant="bodyMedium" style={styles.perfilTexto}>
-          Meu perfil
+          Início
         </Text>
         <IconButton
-          icon="account"
+          icon="home"
           iconColor="white"
           size={24}
-          onPress={() => navigation.navigate('Perfil')}
+          onPress={() => navigation.navigate('Home')}
         />
       </View>
 
-      {/* Área do Notificação */}
+      {/* Opção Área Administrativa (Protegida) */}
       <View style={styles.perfil}>
         <Text variant="bodyMedium" style={styles.perfilTexto}>
-          Notificação
+          Área Administrativa
         </Text>
         <IconButton
-          icon="bell"
+          icon="shield-account"
           iconColor="white"
           size={24}
-          onPress={() => {}}
+          onPress={irParaAreaAdministrativa}
         />
       </View>
 
@@ -111,33 +116,53 @@ const CabecalhoMenu = () => {
         />
       </View>
 
-      {/* Área do configuração */}
+      {/* Área do perfil */}
       <View style={styles.perfil}>
         <Text variant="bodyMedium" style={styles.perfilTexto}>
-          Configuração
+          Meu perfil
         </Text>
         <IconButton
-          icon="cog"
+          icon="account-circle"
           iconColor="white"
           size={24}
-          onPress={() => navigation.navigate('Perfil')}
+          onPress={() => {
+            if (isLoggedIn) {
+              navigation.navigate('Perfil');
+            } else {
+              navigation.navigate('Login');
+            }
+          }}
         />
       </View>
 
-      {/* Área do sair */}
-      <View style={styles.perfil}>
-        <Text variant="bodyMedium" style={styles.perfilTexto}>
-          Sair
-        </Text>
-        <IconButton
-          icon="logout"
-          iconColor="white"
-          size={24}
-          onPress={() => setDialogSair(true)}
-        />
-      </View>
+      {/* Área de Sair ou Entrar */}
+      {isLoggedIn ? (
+        <View style={styles.perfil}>
+          <Text variant="bodyMedium" style={styles.perfilTexto}>
+            Sair
+          </Text>
+          <IconButton
+            icon="logout"
+            iconColor="white"
+            size={24}
+            onPress={() => setDialogSair(true)}
+          />
+        </View>
+      ) : (
+        <View style={styles.perfil}>
+          <Text variant="bodyMedium" style={styles.perfilTexto}>
+            Entrar / Cadastrar
+          </Text>
+          <IconButton
+            icon="login"
+            iconColor="white"
+            size={24}
+            onPress={() => navigation.navigate('Acesso')}
+          />
+        </View>
+      )}
 
-      {/* Dialog de confirmação */}
+      {/* Dialog de confirmação de saída */}
       <Portal>
         <Dialog
           visible={dialogSair}
@@ -145,7 +170,7 @@ const CabecalhoMenu = () => {
           <Dialog.Title>Confirmar saída</Dialog.Title>
           <Dialog.Content>
             <Text>
-              Deseja realmente sair do aplicativo?
+              Deseja realmente sair da sua conta?
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
@@ -172,6 +197,7 @@ const styles = StyleSheet.create({
   usuario: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 5,
   },
   avatar: {
     backgroundColor: '#F2A900',
