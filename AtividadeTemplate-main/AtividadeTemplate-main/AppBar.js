@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import { Appbar, ActivityIndicator, Portal, Dialog, Button, TextInput } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import { styles } from './css/Styles';
 import ModCard from './Cards';
 import { useState, useCallback } from 'react';
@@ -52,6 +53,30 @@ const AppBar = ({ navigation }) => {
         }
     };
 
+    // Selecionar imagem usando expo-image-picker
+    const selecionarImagem = async () => {
+        const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permissao.granted) {
+            alert('Precisamos de permissão para acessar a galeria de fotos.');
+            return;
+        }
+
+        const resultado = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.7,
+            base64: true,
+        });
+
+        if (!resultado.canceled && resultado.assets && resultado.assets.length > 0) {
+            const asset = resultado.assets[0];
+            const fotoUri = asset.base64
+                ? `data:image/jpeg;base64,${asset.base64}`
+                : asset.uri;
+            setImagemUrl(fotoUri);
+        }
+    };
+
     // Ações de Edição
     const abrirEditar = (item) => {
         setItemEditando(item);
@@ -63,8 +88,8 @@ const AppBar = ({ navigation }) => {
     };
 
     const salvarEdicao = async () => {
-        if (!titulo.trim() || !imagemUrl.trim()) {
-            alert('Título e URL da imagem são obrigatórios.');
+        if (!titulo.trim() || !imagemUrl) {
+            alert('Título e imagem são obrigatórios.');
             return;
         }
 
@@ -277,14 +302,38 @@ const AppBar = ({ navigation }) => {
                                 mode="outlined"
                                 style={estilosAba.dialogInput}
                             />
-                            <TextInput
-                                label="URL da Imagem *"
-                                value={imagemUrl}
-                                onChangeText={setImagemUrl}
-                                mode="outlined"
-                                autoCapitalize="none"
-                                style={estilosAba.dialogInput}
-                            />
+                            {/* CAMPO DE UPLOAD DE IMAGEM */}
+                            <View style={{ marginBottom: 12 }}>
+                                <Text variant="labelLarge" style={{ marginBottom: 6, color: '#444444' }}>
+                                    Imagem do Conteúdo *
+                                </Text>
+
+                                {imagemUrl ? (
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Image
+                                            source={{ uri: imagemUrl }}
+                                            style={{ width: '100%', height: 150, borderRadius: 8, backgroundColor: '#E0E0E0' }}
+                                        />
+                                        <Button
+                                            mode="outlined"
+                                            icon="camera"
+                                            onPress={selecionarImagem}
+                                            style={{ marginTop: 8 }}
+                                        >
+                                            Trocar Imagem
+                                        </Button>
+                                    </View>
+                                ) : (
+                                    <Button
+                                        mode="outlined"
+                                        icon="image-plus"
+                                        onPress={selecionarImagem}
+                                        style={{ borderColor: '#F2A900', paddingVertical: 8 }}
+                                    >
+                                        Selecionar Imagem da Galeria
+                                    </Button>
+                                )}
+                            </View>
                             <TextInput
                                 label="Descrição"
                                 value={descricao}

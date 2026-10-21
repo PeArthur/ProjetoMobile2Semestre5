@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Image } from 'react-native';
 import {
     Appbar,
     Card,
@@ -10,6 +10,7 @@ import {
     Dialog,
     ActivityIndicator,
 } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from './AuthContext';
 import API_URL from './api';
 
@@ -61,6 +62,30 @@ const AreaAdministrativa = ({ navigation }) => {
         }
     };
 
+    // Selecionar imagem usando expo-image-picker
+    const selecionarImagem = async () => {
+        const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permissao.granted) {
+            alert('Precisamos de permissão para acessar suas fotos.');
+            return;
+        }
+
+        const resultado = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.7,
+            base64: true,
+        });
+
+        if (!resultado.canceled && resultado.assets && resultado.assets.length > 0) {
+            const asset = resultado.assets[0];
+            const fotoUri = asset.base64
+                ? `data:image/jpeg;base64,${asset.base64}`
+                : asset.uri;
+            setImagemUrl(fotoUri);
+        }
+    };
+
     // Abrir formulário para novo conteúdo
     const abrirNovo = () => {
         setItemEditando(null);
@@ -83,8 +108,8 @@ const AreaAdministrativa = ({ navigation }) => {
 
     // Salvar (Criar ou Atualizar)
     const salvarConteudo = async () => {
-        if (!titulo.trim() || !imagemUrl.trim()) {
-            alert('Por favor, preencha o título e a URL da imagem.');
+        if (!titulo.trim() || !imagemUrl) {
+            alert('Por favor, preencha o título e selecione uma imagem.');
             return;
         }
 
@@ -104,7 +129,7 @@ const AreaAdministrativa = ({ navigation }) => {
                 body: JSON.stringify({
                     titulo: titulo.trim(),
                     descricao: descricao.trim(),
-                    imagemUrl: imagemUrl.trim(),
+                    imagemUrl: imagemUrl,
                     categoria: categoria.trim(),
                 }),
             });
@@ -253,7 +278,7 @@ const AreaAdministrativa = ({ navigation }) => {
                     style={estilos.dialog}
                 >
                     <Dialog.Title>
-                        {itemEditando ? 'Editar Conteúdo / Imagem' : 'Novo Conteúdo'}
+                        {itemEditando ? 'Editar Conteúdo' : 'Novo Conteúdo'}
                     </Dialog.Title>
                     <Dialog.ScrollArea>
                         <ScrollView contentContainerStyle={{ paddingVertical: 10 }}>
@@ -273,15 +298,40 @@ const AreaAdministrativa = ({ navigation }) => {
                                 mode="outlined"
                                 style={estilos.input}
                             />
-                            <TextInput
-                                label="URL da Imagem *"
-                                placeholder="Ex: https://picsum.photos/700"
-                                value={imagemUrl}
-                                onChangeText={setImagemUrl}
-                                mode="outlined"
-                                autoCapitalize="none"
-                                style={estilos.input}
-                            />
+
+                            {/* CAMPO DE UPLOAD DE IMAGEM COM EXPO-IMAGE-PICKER */}
+                            <View style={estilos.uploadContainer}>
+                                <Text variant="labelLarge" style={estilos.uploadLabel}>
+                                    Imagem do Conteúdo *
+                                </Text>
+
+                                {imagemUrl ? (
+                                    <View style={estilos.previewContainer}>
+                                        <Image
+                                            source={{ uri: imagemUrl }}
+                                            style={estilos.previewImagem}
+                                        />
+                                        <Button
+                                            mode="outlined"
+                                            icon="camera"
+                                            onPress={selecionarImagem}
+                                            style={estilos.botaoTrocarImagem}
+                                        >
+                                            Trocar Imagem
+                                        </Button>
+                                    </View>
+                                ) : (
+                                    <Button
+                                        mode="outlined"
+                                        icon="image-plus"
+                                        onPress={selecionarImagem}
+                                        style={estilos.botaoUpload}
+                                    >
+                                        Selecionar Imagem da Galeria
+                                    </Button>
+                                )}
+                            </View>
+
                             <TextInput
                                 label="Descrição"
                                 placeholder="Breve descrição do conteúdo"
@@ -389,11 +439,34 @@ const estilos = StyleSheet.create({
         padding: 8,
     },
     dialog: {
-        maxHeight: '80%',
+        maxHeight: '85%',
     },
     input: {
         marginBottom: 12,
         backgroundColor: '#FFFFFF',
+    },
+    uploadContainer: {
+        marginBottom: 12,
+    },
+    uploadLabel: {
+        marginBottom: 6,
+        color: '#444444',
+    },
+    botaoUpload: {
+        borderColor: '#F2A900',
+        paddingVertical: 8,
+    },
+    previewContainer: {
+        alignItems: 'center',
+    },
+    previewImagem: {
+        width: '100%',
+        height: 150,
+        borderRadius: 8,
+        backgroundColor: '#E0E0E0',
+    },
+    botaoTrocarImagem: {
+        marginTop: 8,
     },
 });
 

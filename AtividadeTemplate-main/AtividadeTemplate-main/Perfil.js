@@ -25,6 +25,7 @@ const Perfil = ({ navigation }) => {
         if (user) {
             if (user.nome) setNome(user.nome);
             if (user.email) setEmail(user.email);
+            if (user.foto) setImagem(user.foto);
         }
     }, [user]);
 
@@ -45,14 +46,18 @@ const Perfil = ({ navigation }) => {
             mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
-            quality: 0.8,
+            quality: 0.7,
+            base64: true,
         });
 
         // Verifica se o usuário escolheu uma imagem
-        if (!resultado.canceled) {
-            setImagem(resultado.assets[0].uri);
+        if (!resultado.canceled && resultado.assets && resultado.assets.length > 0) {
+            const asset = resultado.assets[0];
+            const fotoUri = asset.base64
+                ? `data:image/jpeg;base64,${asset.base64}`
+                : asset.uri;
+            setImagem(fotoUri);
         }
-
     };
 
     // ==============================
@@ -69,7 +74,7 @@ const Perfil = ({ navigation }) => {
             imagem,
         });
 
-        await atualizarUsuario({ nome, email });
+        await atualizarUsuario({ nome, email, foto: imagem });
         alert('Perfil atualizado com sucesso!');
     };
 

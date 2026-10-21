@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Image } from 'react-native';
 import {
     Appbar,
     TextInput,
@@ -9,6 +9,7 @@ import {
     Dialog,
     Button,
 } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from './AuthContext';
 import API_URL from './api';
 import ModCard from './Cards';
@@ -61,6 +62,30 @@ const Pesquisa = ({ navigation }) => {
         }
     };
 
+    // Selecionar imagem usando expo-image-picker
+    const selecionarImagem = async () => {
+        const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permissao.granted) {
+            alert('Precisamos de permissão para acessar a galeria de fotos.');
+            return;
+        }
+
+        const resultado = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.7,
+            base64: true,
+        });
+
+        if (!resultado.canceled && resultado.assets && resultado.assets.length > 0) {
+            const asset = resultado.assets[0];
+            const fotoUri = asset.base64
+                ? `data:image/jpeg;base64,${asset.base64}`
+                : asset.uri;
+            setImagemUrl(fotoUri);
+        }
+    };
+
     // Ações de edição e exclusão para usuários logados
     const abrirEditar = (item) => {
         setItemEditando(item);
@@ -72,8 +97,8 @@ const Pesquisa = ({ navigation }) => {
     };
 
     const salvarEdicao = async () => {
-        if (!titulo.trim() || !imagemUrl.trim()) {
-            alert('Título e URL da imagem são obrigatórios.');
+        if (!titulo.trim() || !imagemUrl) {
+            alert('Título e imagem são obrigatórios.');
             return;
         }
 
@@ -88,7 +113,7 @@ const Pesquisa = ({ navigation }) => {
                 body: JSON.stringify({
                     titulo: titulo.trim(),
                     descricao: descricao.trim(),
-                    imagemUrl: imagemUrl.trim(),
+                    imagemUrl: imagemUrl,
                     categoria: categoria.trim(),
                 }),
             });
@@ -221,14 +246,40 @@ const Pesquisa = ({ navigation }) => {
                                 mode="outlined"
                                 style={estilos.dialogInput}
                             />
-                            <TextInput
-                                label="URL da Imagem *"
-                                value={imagemUrl}
-                                onChangeText={setImagemUrl}
-                                mode="outlined"
-                                autoCapitalize="none"
-                                style={estilos.dialogInput}
-                            />
+
+                            {/* CAMPO DE UPLOAD DE IMAGEM */}
+                            <View style={{ marginBottom: 12 }}>
+                                <Text variant="labelLarge" style={{ marginBottom: 6, color: '#444444' }}>
+                                    Imagem do Conteúdo *
+                                </Text>
+
+                                {imagemUrl ? (
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Image
+                                            source={{ uri: imagemUrl }}
+                                            style={{ width: '100%', height: 150, borderRadius: 8, backgroundColor: '#E0E0E0' }}
+                                        />
+                                        <Button
+                                            mode="outlined"
+                                            icon="camera"
+                                            onPress={selecionarImagem}
+                                            style={{ marginTop: 8 }}
+                                        >
+                                            Trocar Imagem
+                                        </Button>
+                                    </View>
+                                ) : (
+                                    <Button
+                                        mode="outlined"
+                                        icon="image-plus"
+                                        onPress={selecionarImagem}
+                                        style={{ borderColor: '#F2A900', paddingVertical: 8 }}
+                                    >
+                                        Selecionar Imagem da Galeria
+                                    </Button>
+                                )}
+                            </View>
+
                             <TextInput
                                 label="Descrição"
                                 value={descricao}

@@ -48,11 +48,44 @@ const login = async ({ email, senha }) => {
 
   return {
     token,
-    usuario: { id: usuario._id, nome: usuario.nome, email: usuario.email }
+    usuario: {
+      id: usuario._id,
+      nome: usuario.nome,
+      email: usuario.email,
+      foto: usuario.foto || '',
+      telefone: usuario.telefone || '',
+      cpf: usuario.cpf || ''
+    }
+  };
+};
+
+const updateProfile = async (userId, dados) => {
+  const camposAtualizar = {};
+  if (dados.nome !== undefined) camposAtualizar.nome = dados.nome;
+  if (dados.email !== undefined) camposAtualizar.email = dados.email;
+  if (dados.foto !== undefined) camposAtualizar.foto = dados.foto;
+  if (dados.telefone !== undefined) camposAtualizar.telefone = dados.telefone;
+  if (dados.cpf !== undefined) camposAtualizar.cpf = dados.cpf;
+
+  const usuarioAtualizado = await User.findByIdAndUpdate(userId, camposAtualizar, { new: true });
+  if (!usuarioAtualizado) {
+    const error = new Error('Usuário não encontrado.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return {
+    id: usuarioAtualizado._id,
+    nome: usuarioAtualizado.nome,
+    email: usuarioAtualizado.email,
+    foto: usuarioAtualizado.foto || '',
+    telefone: usuarioAtualizado.telefone || '',
+    cpf: usuarioAtualizado.cpf || ''
   };
 };
 
 module.exports = {
   register,
-  login
+  login,
+  updateProfile
 };

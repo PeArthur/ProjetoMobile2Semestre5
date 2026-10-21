@@ -35,7 +35,21 @@ const login = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.usuario.id;
+    const usuarioAtualizado = await authService.updateProfile(userId, req.body);
+    res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: usuarioAtualizado });
+  } catch (error) {
+    if (error.statusCode === 404) {
+      return res.status(404).json({ mensagem: error.message });
+    }
+    res.status(500).json({ mensagem: 'Erro ao atualizar perfil: ' + error.message });
+  }
+};
+
 module.exports = {
   register,
-  login
+  login,
+  updateProfile
 };

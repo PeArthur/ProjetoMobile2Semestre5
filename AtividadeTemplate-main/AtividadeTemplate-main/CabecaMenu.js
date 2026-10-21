@@ -43,11 +43,19 @@ const CabecalhoMenu = () => {
         }}
       >
         {/* Avatar */}
-        <Avatar.Icon
-          size={65}
-          icon="account"
-          style={styles.avatar}
-        />
+        {isLoggedIn && user?.foto ? (
+          <Avatar.Image
+            size={65}
+            source={{ uri: user.foto }}
+            style={styles.avatar}
+          />
+        ) : (
+          <Avatar.Icon
+            size={65}
+            icon="account"
+            style={styles.avatar}
+          />
+        )}
 
         {/* Nome e e-mail */}
         <View style={styles.informacoes}>
